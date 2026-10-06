@@ -1,8 +1,10 @@
 package com.matheus.paymentplatform.customer.controller;
 
+import com.matheus.paymentplatform.customer.domain.Customer;
 import com.matheus.paymentplatform.customer.domain.CustomerStatus;
 import com.matheus.paymentplatform.customer.dto.CustomerRequest;
 import com.matheus.paymentplatform.customer.dto.CustomerResponse;
+import com.matheus.paymentplatform.customer.dto.CustomerUpdateRequest;
 import com.matheus.paymentplatform.customer.exception.CustomerNotFoundException;
 import com.matheus.paymentplatform.customer.service.CustomerService;
 import org.junit.jupiter.api.Test;
@@ -16,10 +18,8 @@ import java.time.Instant;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -163,11 +163,93 @@ public class CustomerControllerTest {
         verify(service).findAll();
     }
 
+    @Test
+    void shouldUpdateCustomer() throws Exception{
 
+        String requestJson = """
+        {
+            "name": "Customer Updated",
+            "email": "updated@email.com"
+        }
+        """;
 
+        CustomerUpdateRequest customerUpdate = new CustomerUpdateRequest(
+                "Customer Updated",
+                "updated@email.com"
+        );
 
+        CustomerResponse response = new CustomerResponse(
+                1L,
+                "Customer Updated",
+                "84837620051",
+                "updated@email.com",
+                CustomerStatus.ACTIVE,
+                Instant.now()
+        );
 
+        when(service.update(1L, customerUpdate)).thenReturn(response);
 
+        mockMvc.perform(
+                patch("/api/v1/customers/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestJson)
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.name").value("Customer Updated"))
+                .andExpect(jsonPath("$.cpf").value("84837620051"))
+                .andExpect(jsonPath("$.email").value("updated@email.com"))
+                .andExpect(jsonPath("$.status").value("ACTIVE"));;
+
+        verify(service).update(1L,customerUpdate);
+    }
+
+    @Test
+    void shouldReturnCustomerNotFoundOnUpdate() throws Exception{
+
+        String requestJson = """
+        {
+            "name": "Customer Updated",
+            "email": "updated@email.com"
+        }
+        """;
+
+        CustomerUpdateRequest customerUpdate = new CustomerUpdateRequest(
+                "Customer Updated",
+                "updated@email.com"
+        );
+
+        when(service.update(101L, customerUpdate))
+                .thenThrow(new CustomerNotFoundException(101L));
+
+        mockMvc.perform(
+                patch("/api/v1/customers/101")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestJson)
+        )
+                .andExpect(status().isNotFound());
+
+        verify(service).update(101L, customerUpdate);
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenEmailIsInvalid() throws Exception {
+        String requestJson = """
+        {
+            "name": "Customer Updated",
+            "email": "invalid-email"
+        }
+        """;
+
+        mockMvc.perform(
+                patch("/api/v1/customers/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestJson)
+        )
+                .andExpect(status().isBadRequest());
+
+        verify(service, never()).update(anyLong(), any(CustomerUpdateRequest.class));
+    }
     
 
 
