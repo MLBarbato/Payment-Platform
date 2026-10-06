@@ -13,6 +13,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -106,6 +107,61 @@ public class CustomerControllerTest {
         verify(service).findById(101L);
     }
 
+    @Test
+    void shouldFindAllCustomers() throws Exception {
+        CustomerResponse response = new CustomerResponse(
+                1L,
+                "Matheus",
+                "84837620051",
+                "matheus@email.com",
+                CustomerStatus.ACTIVE,
+                Instant.now()
+        );
+        CustomerResponse response2 = new CustomerResponse(
+                2L,
+                "Customer2",
+                "17246005080",
+                "customer2@email.com",
+                CustomerStatus.ACTIVE,
+                Instant.now()
+        );
+
+        when(service.findAll()).thenReturn(List.of(response,response2));
+
+        mockMvc.perform(
+                        get("/api/v1/customers")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray()) // verifica se é mesmo uma lista
+                .andExpect(jsonPath("$.length()").value(2)) // verifica se o tamanho é realmente 2
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].name").value("Matheus"))
+                .andExpect(jsonPath("$[0].cpf").value("84837620051"))
+                .andExpect(jsonPath("$[0].email").value("matheus@email.com"))
+                .andExpect(jsonPath("$[0].status").value("ACTIVE"))
+                .andExpect(jsonPath("$[1].id").value(2))
+                .andExpect(jsonPath("$[1].name").value("Customer2"))
+                .andExpect(jsonPath("$[1].cpf").value("17246005080"))
+                .andExpect(jsonPath("$[1].email").value("customer2@email.com"))
+                .andExpect(jsonPath("$[1].status").value("ACTIVE"));
+
+        verify(service).findAll();
+    }
+
+    @Test
+    void shouldReturnEmptyCustomerList() throws Exception{
+
+        when(service.findAll()).thenReturn(List.of());
+
+        mockMvc.perform(
+                        get("/api/v1/customers")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray()) // verifica se é mesmo uma lista
+                .andExpect(jsonPath("$.length()").value(0));
+
+        verify(service).findAll();
+    }
 
 
 
