@@ -1,6 +1,5 @@
 package com.matheus.paymentplatform.customer.controller;
 
-import com.matheus.paymentplatform.customer.domain.Customer;
 import com.matheus.paymentplatform.customer.domain.CustomerStatus;
 import com.matheus.paymentplatform.customer.dto.CustomerRequest;
 import com.matheus.paymentplatform.customer.dto.CustomerResponse;
@@ -24,7 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(CustomerController.class)
-public class CustomerControllerTest {
+class CustomerControllerTest {
 
     @Autowired
     MockMvc mockMvc;
@@ -199,7 +198,7 @@ public class CustomerControllerTest {
                 .andExpect(jsonPath("$.name").value("Customer Updated"))
                 .andExpect(jsonPath("$.cpf").value("84837620051"))
                 .andExpect(jsonPath("$.email").value("updated@email.com"))
-                .andExpect(jsonPath("$.status").value("ACTIVE"));;
+                .andExpect(jsonPath("$.status").value("ACTIVE"));
 
         verify(service).update(1L,customerUpdate);
     }
