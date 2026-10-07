@@ -250,6 +250,26 @@ public class CustomerControllerTest {
 
         verify(service, never()).update(anyLong(), any(CustomerUpdateRequest.class));
     }
+
+    @Test
+    void shouldReturnBadRequestWhenCpfIsInvalid() throws Exception{
+        String requestJson = """
+        {
+                "name": "Matheus",
+                "cpf": "12345678900",
+                "email": "matheus@email.com"
+        }
+        """;
+
+        mockMvc.perform(
+                post("/api/v1/customers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestJson)
+        )
+                .andExpect(status().isBadRequest());
+
+        verify(service, never()).create(any(CustomerRequest.class));
+    }
     
 
 
