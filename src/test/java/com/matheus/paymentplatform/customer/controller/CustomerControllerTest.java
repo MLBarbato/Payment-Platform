@@ -5,6 +5,7 @@ import com.matheus.paymentplatform.customer.dto.CustomerRequest;
 import com.matheus.paymentplatform.customer.dto.CustomerResponse;
 import com.matheus.paymentplatform.customer.dto.CustomerUpdateRequest;
 import com.matheus.paymentplatform.customer.exception.CustomerNotFoundException;
+import com.matheus.paymentplatform.customer.exception.ResourceAlreadyExistsException;
 import com.matheus.paymentplatform.customer.service.CustomerService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -269,7 +270,72 @@ class CustomerControllerTest {
 
         verify(service, never()).create(any(CustomerRequest.class));
     }
-    
+    @Test
+    void shouldReturnConflictWhenCpfAlreadyExists() throws Exception{
+        String requestJson = """
+        {
+                "name": "Matheus",
+                "cpf": "84837620051",
+                "email": "matheus@email.com"
+        }
+        """;
 
+        when(service.create(any(CustomerRequest.class)))
+                .thenThrow(new ResourceAlreadyExistsException("CPF already exists."));
+
+        mockMvc.perform(
+                post("/api/v1/customers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestJson)
+        )
+                .andExpect(status().isConflict());
+
+        verify(service).create(any(CustomerRequest.class));
+    }
+
+    @Test
+    void shouldReturnConflictWhenEmailAlreadyExists() throws Exception{
+        String requestJson = """
+        {
+                "name": "Matheus",
+                "cpf": "84837620051",
+                "email": "matheus@email.com"
+        }
+        """;
+
+        when(service.create(any(CustomerRequest.class)))
+                .thenThrow(new ResourceAlreadyExistsException("Email already exists."));
+
+        mockMvc.perform(
+                        post("/api/v1/customers")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(requestJson)
+                )
+                .andExpect(status().isConflict());
+
+        verify(service).create(any(CustomerRequest.class));
+    }
+
+    @Test
+    void shouldReturnConflictWhenEmailAlreadyExistsOnUpdate() throws Exception {
+        String requestJson = """
+        {
+            "name": "Matheus",
+            "email": "matheus@email.com"
+        }
+        """;
+
+        when(service.update(eq(1L), any(CustomerUpdateRequest.class)))
+                .thenThrow(new ResourceAlreadyExistsException("Email already exists."));
+
+        mockMvc.perform(
+                patch("/api/v1/customers/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestJson)
+        )
+                .andExpect(status().isConflict());
+
+        verify(service).update(eq(1L), any(CustomerUpdateRequest.class));
+    }
 
 }
